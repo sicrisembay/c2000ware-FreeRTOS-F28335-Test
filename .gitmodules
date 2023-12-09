@@ -1,0 +1,4 @@
+[submodule "components/FreeRTOS"]
+	path = components/FreeRTOS
+	url = https://github.com/sicrisembay/c2000ware-FreeRTOS.git
+	branch = f2833x
