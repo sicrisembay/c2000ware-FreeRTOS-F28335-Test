@@ -2,3 +2,7 @@
 	path = components/FreeRTOS
 	url = https://github.com/sicrisembay/c2000ware-FreeRTOS.git
 	branch = f2833x
+[submodule "components/c2000ware-core-sdk"]
+	path = components/c2000ware-core-sdk
+	url = https://github.com/TexasInstruments/c2000ware-core-sdk.git
+	branch = main
