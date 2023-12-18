@@ -7,6 +7,8 @@
 
 #include "FreeRTOS.h"
 #include "task.h"
+#include "BSP_uart.h"
+#include "string.h"
 
 extern unsigned int RamfuncsLoadStart;
 extern unsigned int RamfuncsLoadEnd;
@@ -109,6 +111,8 @@ static void InitFlashWaitState(void)
 static void blinkyTask(void * pvParam)
 {
     TickType_t xLastWakeTime;
+    static char * testStringON = "LED on\r\n";
+    static char * testStringOFF = "LED off\r\n";
 
     EALLOW;
     SysCtrlRegs.PCLKCR3.bit.GPIOINENCLK = 1;
@@ -122,9 +126,11 @@ static void blinkyTask(void * pvParam)
     while(1) {
         /* ON LED */
         GpioDataRegs.GPBCLEAR.bit.GPIO34 = 1;
+        BSP_UART_send((uint8_t *)testStringON, strlen(testStringON));
         vTaskDelayUntil(&xLastWakeTime, 500);
         /* OFF LED */
         GpioDataRegs.GPBSET.bit.GPIO34 = 1;
+        BSP_UART_send((uint8_t *)testStringOFF, strlen(testStringOFF));
         vTaskDelayUntil(&xLastWakeTime, 1500);
     }
 }
@@ -197,7 +203,69 @@ void InitPieCtrl(void)
 }
 
 
+void vApplicationGetIdleTaskMemory( StaticTask_t **ppxIdleTaskTCBBuffer,
+                                    StackType_t **ppxIdleTaskStackBuffer,
+                                    uint32_t *pulIdleTaskStackSize )
+{
+    /*
+     * If the buffers to be provided to the Idle task are declared inside this
+     * function then they must be declared static - otherwise they will be
+     * allocated on the stack and so not exists after this function exits.
+     */
+    static StaticTask_t xIdleTaskTCB;
+    static StackType_t uxIdleTaskStack[ configMINIMAL_STACK_SIZE ];
+
+    /*
+     * Pass out a pointer to the StaticTask_t structure in which the Idle
+     * task's state will be stored.
+     */
+    *ppxIdleTaskTCBBuffer = &xIdleTaskTCB;
+
+    /* Pass out the array that will be used as the Idle task's stack. */
+    *ppxIdleTaskStackBuffer = uxIdleTaskStack;
+
+    /*
+     * Pass out the size of the array pointed to by *ppxIdleTaskStackBuffer.
+     * Note that, as the array is necessarily of type StackType_t,
+     * configMINIMAL_STACK_SIZE is specified in words, not bytes.
+     */
+    *pulIdleTaskStackSize = configMINIMAL_STACK_SIZE;
+}
+
+#if 0
+void vApplicationGetTimerTaskMemory( StaticTask_t **ppxTimerTaskTCBBuffer,
+                                     StackType_t **ppxTimerTaskStackBuffer,
+                                     uint32_t *pulTimerTaskStackSize )
+{
+    /*
+     * If the buffers to be provided to the Timer task are declared inside this
+     * function then they must be declared static - otherwise they will be
+     * allocated on the stack and so not exists after this function exits.
+     */
+    static StaticTask_t xTimerTaskTCB;
+    static StackType_t uxTimerTaskStack[ configTIMER_TASK_STACK_DEPTH ];
+
+    /*
+     * Pass out a pointer to the StaticTask_t structure in which the Timer
+     * task's state will be stored.
+     */
+    *ppxTimerTaskTCBBuffer = &xTimerTaskTCB;
+
+    /* Pass out the array that will be used as the Timer task's stack. */
+    *ppxTimerTaskStackBuffer = uxTimerTaskStack;
+
+    /* Pass out the size of the array pointed to by *ppxTimerTaskStackBuffer.
+    Note that, as the array is necessarily of type StackType_t,
+    configTIMER_TASK_STACK_DEPTH is specified in words, not bytes. */
+    *pulTimerTaskStackSize = configTIMER_TASK_STACK_DEPTH;
+}
+#endif
+
+
+#define BLINKY_STACK_SIZE       (512)
 static TaskHandle_t blinkyTaskHandle = NULL;
+static StaticTask_t blinkyTaskStruct;
+static StackType_t blinkyStack[BLINKY_STACK_SIZE];
 
 void main()
 {
@@ -213,8 +281,15 @@ void main()
     /* Configure Core Frequency */
     configure_core_pll(0xA);
 
+    BSP_UART_init();
 
-    xTaskCreate(blinkyTask, "blinky", 512, NULL, 1, &blinkyTaskHandle);
+    blinkyTaskHandle = xTaskCreateStatic(blinkyTask,
+                                         "blinky",
+                                         BLINKY_STACK_SIZE,
+                                         (void *)0,
+                                         1,
+                                         blinkyStack,
+                                         &blinkyTaskStruct);
     vTaskStartScheduler();
 
     /* Should not reach here */
