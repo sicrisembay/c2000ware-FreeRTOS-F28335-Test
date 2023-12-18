@@ -41,6 +41,11 @@
 			<locationURI>virtual:/virtual</locationURI>
 		</link>
 		<link>
+			<name>components/qpc</name>
+			<type>2</type>
+			<locationURI>virtual:/virtual</locationURI>
+		</link>
+		<link>
 			<name>components/FreeRTOS/MemMang</name>
 			<type>2</type>
 			<locationURI>PARENT-3-PROJECT_LOC/components/FreeRTOS/kernel/FreeRTOS/Source/portable/MemMang</locationURI>
@@ -94,6 +99,16 @@
 			<name>components/device_support/headers</name>
 			<type>2</type>
 			<locationURI>virtual:/virtual</locationURI>
+		</link>
+		<link>
+			<name>components/qpc/include</name>
+			<type>2</type>
+			<locationURI>PARENT-3-PROJECT_LOC/components/qpc/include</locationURI>
+		</link>
+		<link>
+			<name>components/qpc/port</name>
+			<type>2</type>
+			<locationURI>PARENT-3-PROJECT_LOC/components/qpc/ports/freertos</locationURI>
 		</link>
 		<link>
 			<name>components/device_support/headers/include</name>

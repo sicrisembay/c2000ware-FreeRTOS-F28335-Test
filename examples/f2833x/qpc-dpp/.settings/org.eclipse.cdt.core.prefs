@@ -8,6 +8,9 @@ environment/project/com.ti.ccstudio.buildDefinitions.C2000.Debug.584779190/C2000
 environment/project/com.ti.ccstudio.buildDefinitions.C2000.Debug.584779190/COMPONENTS_DIR/delimiter=;
 environment/project/com.ti.ccstudio.buildDefinitions.C2000.Debug.584779190/COMPONENTS_DIR/operation=append
 environment/project/com.ti.ccstudio.buildDefinitions.C2000.Debug.584779190/COMPONENTS_DIR/value=${CCS_PROJECT_DIR}/../../../components
+environment/project/com.ti.ccstudio.buildDefinitions.C2000.Debug.584779190/QPC_DIR/delimiter=;
+environment/project/com.ti.ccstudio.buildDefinitions.C2000.Debug.584779190/QPC_DIR/operation=append
+environment/project/com.ti.ccstudio.buildDefinitions.C2000.Debug.584779190/QPC_DIR/value=${COMPONENTS_DIR}/qpc
 environment/project/com.ti.ccstudio.buildDefinitions.C2000.Debug.584779190/append=true
 environment/project/com.ti.ccstudio.buildDefinitions.C2000.Debug.584779190/appendContributed=true
 environment/project/com.ti.ccstudio.buildDefinitions.C2000.Release.1640658318/C2000WARE_FREERTOS_DIR/delimiter=;
