@@ -31,9 +31,19 @@
 			<locationURI>virtual:/virtual</locationURI>
 		</link>
 		<link>
+			<name>components/BSP</name>
+			<type>2</type>
+			<locationURI>PARENT-3-PROJECT_LOC/components/BSP</locationURI>
+		</link>
+		<link>
 			<name>components/FreeRTOS</name>
 			<type>2</type>
 			<locationURI>virtual:/virtual</locationURI>
+		</link>
+		<link>
+			<name>components/FreeRTOS-Plus-CLI</name>
+			<type>2</type>
+			<locationURI>PARENT-3-PROJECT_LOC/components/FreeRTOS-Plus-CLI</locationURI>
 		</link>
 		<link>
 			<name>components/device_support</name>
