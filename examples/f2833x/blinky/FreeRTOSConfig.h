@@ -34,7 +34,7 @@
 #define configIDLE_SHOULD_YIELD             0
 #define configCHECK_FOR_STACK_OVERFLOW      0
 #define configSUPPORT_STATIC_ALLOCATION     1
-#define configSUPPORT_DYNAMIC_ALLOCATION    0
+#define configSUPPORT_DYNAMIC_ALLOCATION    1
 #define configUSE_MUTEXES                   1
 
 // Set the following definitions to 1 to include the API function, or zero

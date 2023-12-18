@@ -43,6 +43,7 @@
 									<listOptionValue builtIn="false" value="${C2000WARE_FREERTOS_DIR}/portable/CCS/C2000_C28x"/>
 									<listOptionValue builtIn="false" value="${C2000WARE_SDK_DIR}/device_support/f2833x/headers/include"/>
 									<listOptionValue builtIn="false" value="${workspace_loc:/${ProjName}/components/BSP}"/>
+									<listOptionValue builtIn="false" value="${workspace_loc:/${ProjName}/components/FreeRTOS-Plus-CLI}"/>
 								</option>
 								<option IS_BUILTIN_EMPTY="false" IS_VALUE_EMPTY="false" id="com.ti.ccstudio.buildDefinitions.C2000_22.6.compilerID.PREINCLUDE.777055306" name="Specify a preinclude file (--preinclude)" superClass="com.ti.ccstudio.buildDefinitions.C2000_22.6.compilerID.PREINCLUDE" valueType="includeFiles">
 									<listOptionValue builtIn="false" value="${workspace_loc:/${ProjName}/components/FreeRTOS/portable/stw_dataTypes.h}"/>
@@ -86,7 +87,7 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-						<entry excluding="components/FreeRTOS/MemMang/heap_1.c|components/FreeRTOS/MemMang/heap_5.c|components/FreeRTOS/MemMang/heap_4.c|components/FreeRTOS/MemMang/heap_3.c|components/FreeRTOS/MemMang/heap_2.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+						<entry excluding="components/FreeRTOS/MemMang/heap_5.c|components/FreeRTOS/MemMang/heap_4.c|components/FreeRTOS/MemMang/heap_3.c|components/FreeRTOS/MemMang/heap_2.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>

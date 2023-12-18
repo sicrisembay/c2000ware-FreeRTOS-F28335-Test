@@ -150,6 +150,7 @@ static inline uint16_t UART_send(uint8_t * pBuf, uint16_t size, bool bFromISR)
     uint16_t j = 0;
     bool fifoFirst = false;
     uint16_t fifoStatus;
+    uint16_t bytesSent = 0;
     BaseType_t xHigherPriorityTaskWoken = pdFALSE;
 
     if((pBuf == NULL) || (size == 0) || (bInit == false)) {
@@ -169,17 +170,17 @@ static inline uint16_t UART_send(uint8_t * pBuf, uint16_t size, bool bFromISR)
         fifoFirst = true;
         j = 0;
     }
-    for(uint16_t i = 0; i < size; i++) {
+    for(bytesSent = 0; bytesSent < size; bytesSent++) {
         if(fifoFirst && (j < UART_FIFO_SZ)) {
-            SciaRegs.SCITXBUF = pBuf[i];
+            SciaRegs.SCITXBUF = pBuf[bytesSent];
             j++;
         } else {
             if(bFromISR) {
-                if(1 != xStreamBufferSendFromISR(txStreamBufHandle, &(pBuf[i]), 1, &xHigherPriorityTaskWoken)) {
+                if(1 != xStreamBufferSendFromISR(txStreamBufHandle, &(pBuf[bytesSent]), 1, &xHigherPriorityTaskWoken)) {
                     break;
                 }
             } else {
-                if(1 != xStreamBufferSend(txStreamBufHandle, &(pBuf[i]), 1, 0)) {
+                if(1 != xStreamBufferSend(txStreamBufHandle, &(pBuf[bytesSent]), 1, 0)) {
                     break;
                 }
             }
@@ -192,7 +193,7 @@ static inline uint16_t UART_send(uint8_t * pBuf, uint16_t size, bool bFromISR)
         portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
     }
 
-    return 0;
+    return bytesSent;
 }
 
 uint16_t BSP_UART_send(uint8_t * pBuf, uint16_t size)
@@ -205,7 +206,7 @@ uint16_t BSP_UART_sendFromISR(uint8_t * pBuf, uint16_t size)
     return UART_send(pBuf, size, true);
 }
 
-static inline uint16_t UART_receive(uint8_t * pBuf, uint16_t size, bool bFromISR)
+static inline uint16_t UART_receive(uint8_t * pBuf, uint16_t size, bool bFromISR, TickType_t xTicksToWait)
 {
     size_t count = 0;
 
@@ -217,20 +218,20 @@ static inline uint16_t UART_receive(uint8_t * pBuf, uint16_t size, bool bFromISR
                                             &xHigherPriorityTaskWoken);
         portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
     } else {
-        count = xStreamBufferReceive(rxStreamBufHandle, (void *)pBuf, size, 0);
+        count = xStreamBufferReceive(rxStreamBufHandle, (void *)pBuf, size, xTicksToWait);
     }
 
     return count;
 }
 
-uint16_t BSP_UART_receive(uint8_t * pBuf, uint16_t size)
+uint16_t BSP_UART_receive(uint8_t * pBuf, uint16_t size, TickType_t xTicksToWait)
 {
-    return UART_receive(pBuf, size, false);
+    return UART_receive(pBuf, size, false, xTicksToWait);
 }
 
 uint16_t BSP_UART_receiveFromISR(uint8_t * pBuf, uint16_t size)
 {
-    return UART_receive(pBuf, size, true);
+    return UART_receive(pBuf, size, true, 0);
 }
 
 

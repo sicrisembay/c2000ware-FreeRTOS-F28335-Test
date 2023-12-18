@@ -6,8 +6,10 @@
  */
 
 #include "FreeRTOS.h"
+#include "FreeRTOS_CLI.h"
 #include "task.h"
 #include "BSP_uart.h"
+#include "cli.h"
 #include "string.h"
 
 extern unsigned int RamfuncsLoadStart;
@@ -108,11 +110,41 @@ static void InitFlashWaitState(void)
 }
 
 
+static void reset(void)
+{
+    /* Tickle dog */
+    EALLOW;
+    SysCtrlRegs.WDKEY = 0x0055;
+    SysCtrlRegs.WDKEY = 0x00AA;
+    EDIS;
+
+    /* Enable watchdog */
+    EALLOW;
+    SysCtrlRegs.WDCR = 0x0000;  /* writing value other than b101 to WDCHK will immediately resets the device */
+    EDIS;
+
+    /* Should not reach here */
+    while(1);
+}
+
+static int16_t FuncReset(char * write_buffer, size_t bufferLen, const char *commandStr)
+{
+    reset();
+    /* Does not reach here */
+    return 0;
+}
+
+
+static const CLI_Command_Definition_t cmd_reset = {
+    "reset",
+    "reset:\r\n"
+    "    Resets device\r\n\r\n",
+    FuncReset,
+    0
+};
 static void blinkyTask(void * pvParam)
 {
     TickType_t xLastWakeTime;
-    static char * testStringON = "LED on\r\n";
-    static char * testStringOFF = "LED off\r\n";
 
     EALLOW;
     SysCtrlRegs.PCLKCR3.bit.GPIOINENCLK = 1;
@@ -121,16 +153,18 @@ static void blinkyTask(void * pvParam)
     GpioCtrlRegs.GPBMUX1.bit.GPIO34 = 0;
     EDIS;
 
+    BSP_UART_init();
+    CLI_init();
+    FreeRTOS_CLIRegisterCommand(&cmd_reset);
+
     xLastWakeTime = xTaskGetTickCount();
 
     while(1) {
         /* ON LED */
         GpioDataRegs.GPBCLEAR.bit.GPIO34 = 1;
-        BSP_UART_send((uint8_t *)testStringON, strlen(testStringON));
         vTaskDelayUntil(&xLastWakeTime, 500);
         /* OFF LED */
         GpioDataRegs.GPBSET.bit.GPIO34 = 1;
-        BSP_UART_send((uint8_t *)testStringOFF, strlen(testStringOFF));
         vTaskDelayUntil(&xLastWakeTime, 1500);
     }
 }
@@ -280,8 +314,6 @@ void main()
     InitFlashWaitState();
     /* Configure Core Frequency */
     configure_core_pll(0xA);
-
-    BSP_UART_init();
 
     blinkyTaskHandle = xTaskCreateStatic(blinkyTask,
                                          "blinky",

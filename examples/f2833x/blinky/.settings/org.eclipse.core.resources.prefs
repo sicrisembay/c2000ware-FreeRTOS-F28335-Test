@@ -1,6 +1,8 @@
 eclipse.preferences.version=1
 encoding//Debug/components/BSP/subdir_rules.mk=UTF-8
 encoding//Debug/components/BSP/subdir_vars.mk=UTF-8
+encoding//Debug/components/FreeRTOS-Plus-CLI/subdir_rules.mk=UTF-8
+encoding//Debug/components/FreeRTOS-Plus-CLI/subdir_vars.mk=UTF-8
 encoding//Debug/components/FreeRTOS/MemMang/subdir_rules.mk=UTF-8
 encoding//Debug/components/FreeRTOS/MemMang/subdir_vars.mk=UTF-8
 encoding//Debug/components/FreeRTOS/portable/subdir_rules.mk=UTF-8
