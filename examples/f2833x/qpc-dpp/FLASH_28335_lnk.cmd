@@ -96,7 +96,10 @@ SECTIONS
    csm_rsvd         : > CSM_RSVD   PAGE = 0
 
    .stack           : > RAMM0_1,   PAGE = 1
-   .ebss            : > RAML3_7,   PAGE = 1
+   .ebss            : > RAML3_7,   PAGE = 1,
+                        START(_EbssStart),
+                        END(_EbssEnd)
+
    .esysmem         : > RAML3_7,   PAGE = 1
 
    .econst          : > FLASH,     PAGE = 0

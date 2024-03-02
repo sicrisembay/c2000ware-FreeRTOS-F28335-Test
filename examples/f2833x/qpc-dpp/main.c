@@ -5,13 +5,44 @@
  *      Author: Sicris
  */
 
-#include "FreeRTOS.h"
-#include "task.h"
+#include "autoconf.h"
+#include "string.h"
+#include "qpc.h"
+#include "dpp.h"
 
 extern unsigned int RamfuncsLoadStart;
 extern unsigned int RamfuncsLoadEnd;
 extern unsigned int RamfuncsRunStart;
+extern unsigned int EbssStart;
+extern unsigned int EbssEnd;
 
+/*
+ * small size pool
+ */
+static QF_MPOOL_EL(QEvt) smallPoolSto[CONFIG_QPC_SMALL_MEMPOOL_ENTRY_COUNT];
+
+/*
+ * medium size pool
+ */
+typedef struct {
+    QEvt super;
+    uint8_t data[CONFIG_QPC_MEDIUM_MEMPOOL_ENTRY_SIZE];
+} medPool;
+static QF_MPOOL_EL(medPool) medPoolSto[CONFIG_QPC_MEDIUM_MEMPOOL_ENTRY_COUNT];
+
+/*
+ * large size pool
+ */
+typedef struct {
+    QEvt super;
+    uint8_t data[CONFIG_QPC_LARGE_MEMPOOL_ENTRY_SIZE];
+} largePool;
+static QF_MPOOL_EL(largePool) largePoolSto[CONFIG_QPC_LARGE_MEMPOOL_ENTRY_COUNT];
+
+/*
+ * Storage for Publish-Subscribe
+ */
+static QSubscrList subscrSto[MAX_PUB_SIG];
 
 static void configure_core_pll(uint16_t val)
 {
@@ -106,30 +137,6 @@ static void InitFlashWaitState(void)
 }
 
 
-static void blinkyTask(void * pvParam)
-{
-    TickType_t xLastWakeTime;
-
-    EALLOW;
-    SysCtrlRegs.PCLKCR3.bit.GPIOINENCLK = 1;
-    GpioCtrlRegs.GPBPUD.bit.GPIO34 = 1;
-    GpioCtrlRegs.GPBDIR.bit.GPIO34 = 1;
-    GpioCtrlRegs.GPBMUX1.bit.GPIO34 = 0;
-    EDIS;
-
-    xLastWakeTime = xTaskGetTickCount();
-
-    while(1) {
-        /* ON LED */
-        GpioDataRegs.GPBCLEAR.bit.GPIO34 = 1;
-        vTaskDelayUntil(&xLastWakeTime, 500);
-        /* OFF LED */
-        GpioDataRegs.GPBSET.bit.GPIO34 = 1;
-        vTaskDelayUntil(&xLastWakeTime, 1500);
-    }
-}
-
-
 interrupt void DefualtISR(void)
 {
     asm ("      ESTOP0");
@@ -197,11 +204,48 @@ void InitPieCtrl(void)
 }
 
 
-static TaskHandle_t blinkyTaskHandle = NULL;
+void vApplicationGetIdleTaskMemory( StaticTask_t **ppxIdleTaskTCBBuffer,
+                                    StackType_t **ppxIdleTaskStackBuffer,
+                                    uint32_t *pulIdleTaskStackSize )
+{
+    /*
+     * If the buffers to be provided to the Idle task are declared inside this
+     * function then they must be declared static - otherwise they will be
+     * allocated on the stack and so not exists after this function exits.
+     */
+    static StaticTask_t xIdleTaskTCB;
+    static StackType_t uxIdleTaskStack[ configMINIMAL_STACK_SIZE ];
+
+    /*
+     * Pass out a pointer to the StaticTask_t structure in which the Idle
+     * task's state will be stored.
+     */
+    *ppxIdleTaskTCBBuffer = &xIdleTaskTCB;
+
+    /* Pass out the array that will be used as the Idle task's stack. */
+    *ppxIdleTaskStackBuffer = uxIdleTaskStack;
+
+    /*
+     * Pass out the size of the array pointed to by *ppxIdleTaskStackBuffer.
+     * Note that, as the array is necessarily of type StackType_t,
+     * configMINIMAL_STACK_SIZE is specified in words, not bytes.
+     */
+    *pulIdleTaskStackSize = configMINIMAL_STACK_SIZE;
+}
+
+static QEvt const * tableQueueSto[N_PHILO];
+static QEvt const * philoQueueSto[N_PHILO][N_PHILO];
+static StackType_t philoStack[N_PHILO][configMINIMAL_STACK_SIZE];
+static StackType_t tableStack[configMINIMAL_STACK_SIZE];
 
 void main()
 {
     InitPieCtrl();
+
+    /*
+     * Zero ebss section
+     */
+    memset(&EbssStart, 0, &EbssEnd - &EbssStart);
 
     /*
      * Copy ramfuncs section
@@ -213,9 +257,46 @@ void main()
     /* Configure Core Frequency */
     configure_core_pll(0xA);
 
+    /* Initialize QF framework */
+    QF_init();
+#if CONFIG_QPC_QSPY_ENABLE
+    QS_INIT((void* )0);
+#endif
+    /* Initialize Event Pool
+     * Note: QF can manage up to three event pools (e.g., small, medium, and large events).
+     * An application may call this function up to three times to initialize up to three event
+     * pools in QF.  The subsequent calls to QF_poolInit() function must be made with
+     * progressively increasing values of the evtSize parameter.
+     */
+    QF_poolInit(smallPoolSto, sizeof(smallPoolSto), sizeof(smallPoolSto[0]));
+    QF_poolInit(medPoolSto, sizeof(medPoolSto), sizeof(medPoolSto[0]));
+    QF_poolInit(largePoolSto, sizeof(largePoolSto), sizeof(largePoolSto[0]));
+    QF_psInit(subscrSto, Q_DIM(subscrSto));
 
-    xTaskCreate(blinkyTask, "blinky", 512, NULL, 1, &blinkyTaskHandle);
-    vTaskStartScheduler();
+    for (uint16_t i = 0; i < N_PHILO; i++) {
+        Philo_ctor(i);
+        QActive_setAttr(AO_Philo[i], TASK_NAME_ATTR, "Philo");
+        QACTIVE_START(AO_Philo[i],
+                      (QPrioSpec)(i+1),
+                      philoQueueSto[i],
+                      Q_DIM(philoQueueSto[i]),
+                      philoStack[i],
+                      configMINIMAL_STACK_SIZE,
+                      (QEvt *)0);
+    }
+
+    Table_ctor();
+    QActive_setAttr(AO_Table, TASK_NAME_ATTR, "Table");
+    QACTIVE_START(AO_Table,
+                  (QPrioSpec)(N_PHILO + 1),
+                  tableQueueSto,
+                  Q_DIM(tableQueueSto),
+                  tableStack,
+                  configMINIMAL_STACK_SIZE,
+                  (QEvt *)0);
+
+
+    QF_run();
 
     /* Should not reach here */
     while(1);
