@@ -11,10 +11,13 @@
 #include "stdbool.h"
 #include "portable.h"
 
+#define BSP_UART_TX_FIFO_SIZE       (16)
+
 void BSP_UART_init(void);
 bool BSP_UART_init_done(void);
-uint16_t BSP_UART_send(uint8_t * pBuf, uint16_t size);
-uint16_t BSP_UART_sendFromISR(uint8_t * pBuf, uint16_t size);
+uint16_t BSP_UART_send(uint8_t const * pBuf, uint16_t size);
+uint16_t BSP_UART_sendFromISR(uint8_t const * pBuf, uint16_t size);
+bool BSP_UART_sendBufferEmpty(void);
 uint16_t BSP_UART_receive(uint8_t * pBuf, uint16_t size, TickType_t xTicksToWait);
 uint16_t BSP_UART_receiveFromISR(uint8_t * pBuf, uint16_t size);
 

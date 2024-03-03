@@ -12,8 +12,8 @@ uint16_t const l_TickHook = 0;
 
 #if CONFIG_QPC_QSPY_ENABLE
 #include "BSP_uart.h"
-static uint8_t qsTxBuf[1024];
-static uint8_t qsRxBuf[256];
+static uint8_t qsTxBuf[CONFIG_QSPY_TX_BUFFER_SIZE];
+static uint8_t qsRxBuf[CONFIG_QSPY_RX_BUFFER_SIZE];
 #endif /* CONFIG_QPC_QSPY_ENABLE */
 
 void vApplicationTickHook(void)
@@ -27,13 +27,6 @@ void vApplicationTickHook(void)
 
 void vApplicationIdleHook(void)
 {
-    // Some floating point code is to exercise the VFP...
-    float volatile x = 1.73205F;
-    x = x * 1.73205F;
-#if CONFIG_QPC_QSPY_ENABLE
-    QS_rxParse();
-
-#endif /* CONFIG_QPC_QSPY_ENABLE */
 }
 
 void QF_onStartup(void)
@@ -56,19 +49,25 @@ void Q_onAssert(char const *module, int loc)
 #define QSPY_RX_NOTIFY_TIMEOUT      (QSPY_RX_NOTIFY_TIMEOUT_MS / portTICK_PERIOD_MS)
 
 static StaticTask_t xQspyWorkerTCB;
-static StackType_t xQspyWorkerStackSto[CONFIG_QPC_QSPY_WORKER_STACK_SIZE];
+static StackType_t xQspyWorkerStackSto[CONFIG_QSPY_WORKER_STACK_SIZE];
 static TaskHandle_t xQspyWorkerTaskHandle = NULL;
 
 static void QS_workerTask(void * pvParam)
 {
     uint8_t const * pBlock;
     uint16_t txLen;
-    TickType_t xLastTick;
+    uint16_t rxLen;
+    uint8_t rxBuf[16];
 
-    xLastTick = xTaskGetTickCount();
     while(1) {
-        vTaskDelayUntil(&xLastTick, QSPY_RX_NOTIFY_TIMEOUT);
-        txLen = 16;
+        rxLen = BSP_UART_receive(rxBuf, sizeof(rxBuf), QSPY_RX_NOTIFY_TIMEOUT);
+        if(rxLen > 0) {
+            for(uint16_t i = 0; i < rxLen; i++) {
+                QS_RX_PUT((rxBuf[i] & 0x00FF));
+            }
+            QS_rxParse();
+        }
+        txLen = BSP_UART_TX_FIFO_SIZE;
         taskENTER_CRITICAL();
         pBlock = QS_getBlock(&txLen);
         taskEXIT_CRITICAL();
@@ -88,9 +87,9 @@ uint8_t QS_onStartup(void const *arg)
         xQspyWorkerTaskHandle = xTaskCreateStatic(
                 QS_workerTask,
                 "QSpyWorker",
-                CONFIG_QPC_QSPY_WORKER_STACK_SIZE,
+                CONFIG_QSPY_WORKER_STACK_SIZE,
                 (void *)0,
-                CONFIG_QPC_QPSY_WORKER_TASK_PRIORITY,
+                CONFIG_QPSY_WORKER_TASK_PRIORITY,
                 xQspyWorkerStackSto,
                 &xQspyWorkerTCB);
     }
@@ -113,12 +112,40 @@ QSTimeCtr QS_onGetTime(void)
 
 void QS_onFlush(void)
 {
-    /// TODO: Implement QS buffer flushing to HW peripheral
+    /* QS buffer flushing to HW peripheral */
+    uint8_t const * pBlock;
+    uint16_t txLen;
+
+    while(1) {
+        txLen = BSP_UART_TX_FIFO_SIZE;
+        taskENTER_CRITICAL();
+        pBlock = QS_getBlock(&txLen);
+        taskEXIT_CRITICAL();
+        if(txLen == 0) {
+            break;
+        }
+        (void)BSP_UART_send(pBlock, txLen);
+        while(!BSP_UART_sendBufferEmpty());
+    }
+
 }
 
 
 void QS_onReset(void)
 {
+    /* Tickle dog */
+    EALLOW;
+    SysCtrlRegs.WDKEY = 0x0055;
+    SysCtrlRegs.WDKEY = 0x00AA;
+    EDIS;
+
+    /* Enable watchdog */
+    EALLOW;
+    SysCtrlRegs.WDCR = 0x0000;  /* writing value other than b101 to WDCHK will immediately resets the device */
+    EDIS;
+
+    /* Should not reach here */
+    while(1);
 }
 
 

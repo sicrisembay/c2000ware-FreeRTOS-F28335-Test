@@ -32,12 +32,18 @@ menu "Components"
       bool "Q-Spy"
       default y
       if QPC_QSPY_ENABLE
-          config QPC_QPSY_WORKER_TASK_PRIORITY
+          config QPSY_WORKER_TASK_PRIORITY
               int "Priority"
               default 1
-          config QPC_QSPY_WORKER_STACK_SIZE
+          config QSPY_WORKER_STACK_SIZE
               int "Stack Size"
               default 512
+          config QSPY_TX_BUFFER_SIZE
+              int "Tx Size"
+              default 256
+          config QSPY_RX_BUFFER_SIZE
+              int "Rx Size"
+              default 256
       endif
   endmenu # QPC Configuration
 endmenu # Components

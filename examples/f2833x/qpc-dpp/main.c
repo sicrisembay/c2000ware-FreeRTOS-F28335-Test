@@ -273,6 +273,9 @@ void main()
     QF_poolInit(largePoolSto, sizeof(largePoolSto), sizeof(largePoolSto[0]));
     QF_psInit(subscrSto, Q_DIM(subscrSto));
 
+#ifdef Q_SPY
+    produce_sig_dict();
+#endif
     for (uint16_t i = 0; i < N_PHILO; i++) {
         Philo_ctor(i);
         QActive_setAttr(AO_Philo[i], TASK_NAME_ATTR, "Philo");
