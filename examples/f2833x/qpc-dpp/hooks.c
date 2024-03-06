@@ -79,11 +79,10 @@ static void QS_workerTask(void * pvParam)
 uint8_t QS_onStartup(void const *arg)
 {
     (void)arg;  // unused parameter
-    QS_initBuf(qsTxBuf, sizeof(qsTxBuf));
-    QS_rxInitBuf(qsRxBuf, sizeof(qsRxBuf));
-    BSP_UART_init();
-
     if(NULL == xQspyWorkerTaskHandle) {
+        QS_initBuf(qsTxBuf, sizeof(qsTxBuf));
+        QS_rxInitBuf(qsRxBuf, sizeof(qsRxBuf));
+        BSP_UART_init();
         xQspyWorkerTaskHandle = xTaskCreateStatic(
                 QS_workerTask,
                 "QSpyWorker",

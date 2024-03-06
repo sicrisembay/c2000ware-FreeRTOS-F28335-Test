@@ -9,6 +9,7 @@
 #include "string.h"
 #include "qpc.h"
 #include "dpp.h"
+#include "bsp.h"
 
 extern unsigned int RamfuncsLoadStart;
 extern unsigned int RamfuncsLoadEnd;
@@ -259,9 +260,8 @@ void main()
 
     /* Initialize QF framework */
     QF_init();
-#if CONFIG_QPC_QSPY_ENABLE
-    QS_INIT((void* )0);
-#endif
+    BSP_init();
+
     /* Initialize Event Pool
      * Note: QF can manage up to three event pools (e.g., small, medium, and large events).
      * An application may call this function up to three times to initialize up to three event

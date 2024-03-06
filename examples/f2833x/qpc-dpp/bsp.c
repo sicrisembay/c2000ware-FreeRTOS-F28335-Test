@@ -34,9 +34,6 @@ void BSP_init(void)
     QS_USR_DICTIONARY(PHILO_STAT);
     QS_USR_DICTIONARY(PAUSED_STAT);
     QS_USR_DICTIONARY(COMMAND_STAT);
-
-    QS_GLB_FILTER(QS_ALL_RECORDS);
-    QS_GLB_FILTER(-QS_QF_TICK);
 }
 
 void BSP_displayPaused(uint8_t paused)
