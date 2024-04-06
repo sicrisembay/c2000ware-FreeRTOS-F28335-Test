@@ -1,0 +1,3 @@
+mainmenu "QPC DPP Configuration"
+
+rsource "../../../components/Kconfig"

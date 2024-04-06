@@ -145,7 +145,7 @@ bool BSP_UART_init_done(void)
     return true;
 }
 
-static inline uint16_t UART_send(uint8_t * pBuf, uint16_t size, bool bFromISR)
+static inline uint16_t UART_send(uint8_t const * pBuf, uint16_t size, bool bFromISR)
 {
     uint16_t j = 0;
     bool fifoFirst = false;
@@ -196,14 +196,19 @@ static inline uint16_t UART_send(uint8_t * pBuf, uint16_t size, bool bFromISR)
     return bytesSent;
 }
 
-uint16_t BSP_UART_send(uint8_t * pBuf, uint16_t size)
+uint16_t BSP_UART_send(uint8_t const * pBuf, uint16_t size)
 {
     return UART_send(pBuf, size, false);
 }
 
-uint16_t BSP_UART_sendFromISR(uint8_t * pBuf, uint16_t size)
+uint16_t BSP_UART_sendFromISR(uint8_t const * pBuf, uint16_t size)
 {
     return UART_send(pBuf, size, true);
+}
+
+bool BSP_UART_sendBufferEmpty(void)
+{
+    return (SciaRegs.SCIFFTX.bit.TXFFST == 0) && xStreamBufferIsEmpty(txStreamBufHandle);
 }
 
 static inline uint16_t UART_receive(uint8_t * pBuf, uint16_t size, bool bFromISR, TickType_t xTicksToWait)
@@ -233,6 +238,3 @@ uint16_t BSP_UART_receiveFromISR(uint8_t * pBuf, uint16_t size)
 {
     return UART_receive(pBuf, size, true, 0);
 }
-
-
-

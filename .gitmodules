@@ -6,3 +6,6 @@
 	path = components/c2000ware-core-sdk
 	url = https://github.com/TexasInstruments/c2000ware-core-sdk.git
 	branch = main
+[submodule "components/qpc"]
+	path = components/qpc
+	url = https://github.com/sicrisembay/qpc.git
