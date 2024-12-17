@@ -7,6 +7,8 @@ This contains examples CCS (Code Composer Studio) projects that are used to test
 |------------------------|--------------|
 | Code Composer Studio   | v12.7.1      |
 | TI Compiler            | v22.6.0.LTS  |
+| QM                     | v5.3.0       |
+| QPC                    | v7.4.0       |
 
 ## Blinky
 This is a simple example that blinks the LED (500ms ON and 1500ms OFF).
